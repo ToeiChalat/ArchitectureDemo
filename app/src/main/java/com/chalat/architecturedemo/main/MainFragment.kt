@@ -9,20 +9,20 @@ import android.view.ViewGroup
 import com.chalat.architecturedemo.Injection
 import com.chalat.architecturedemo.R
 import com.chalat.architecturedemo.data.FoodDataSource
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
+import com.chalat.architecturedemo.data.entities.FoodMenuItem
 import kotlinx.android.synthetic.main.fragment_main.*
-import timber.log.Timber
 
-class MainFragment : Fragment() {
+class MainFragment : Fragment(), MainContract.View {
 
     private val adapter = FoodMenuAdapter()
     private lateinit var foodRepository: FoodDataSource
+    private lateinit var mainPresenter: MainContract.Presenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         context?.let {
             foodRepository = Injection.getFoodRepository(it)
+            mainPresenter = Injection.getMainPresenter(this, foodRepository)
         }
     }
 
@@ -44,15 +44,13 @@ class MainFragment : Fragment() {
         getRandomFood()
     }
 
+    override fun updateView(randomFoodList: List<FoodMenuItem>) {
+        adapter.replaceData(randomFoodList)
+        foodMenuSwipeRefreshLayout.isRefreshing = false
+    }
+
     private fun getRandomFood() {
-        foodRepository.getFoodList()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    val randomFoodList = it.shuffled()
-                    adapter.replaceData(randomFoodList)
-                    foodMenuSwipeRefreshLayout.isRefreshing = false
-                }, { Timber.e(it) })
+        mainPresenter.getRandomFood()
     }
 
     companion object {

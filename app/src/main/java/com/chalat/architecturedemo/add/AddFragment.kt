@@ -10,8 +10,6 @@ import android.view.ViewGroup
 import com.chalat.architecturedemo.Injection
 
 import com.chalat.architecturedemo.R
-import com.chalat.architecturedemo.data.FoodDataSource
-import com.chalat.architecturedemo.data.entities.FoodMenuItem
 import com.sangcomz.fishbun.FishBun
 import com.sangcomz.fishbun.adapter.image.impl.GlideAdapter
 import kotlinx.android.synthetic.main.fragment_add.*
@@ -19,22 +17,18 @@ import com.sangcomz.fishbun.define.Define
 import android.app.Activity.RESULT_OK
 import android.net.Uri
 import com.bumptech.glide.Glide
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
 import java.util.ArrayList
 
 
-class AddFragment : Fragment() {
+class AddFragment : Fragment(), AddContract.View {
 
-    private lateinit var repository: FoodDataSource
-
-    private var foodImageUri = ""
+    private lateinit var addPresenter: AddContract.Presenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         context?.let {
-            repository = Injection.getFoodRepository(it)
+            val repository = Injection.getFoodRepository(it)
+            addPresenter = Injection.getAddPresenter(this, repository)
         }
     }
 
@@ -60,7 +54,7 @@ class AddFragment : Fragment() {
         }
     }
 
-    private val onClickSelectImage: (View) -> Unit = {
+    override fun showAlbum() {
         FishBun.with(this)
                 .setImageAdapter(GlideAdapter())
                 .setCamera(true)
@@ -69,38 +63,36 @@ class AddFragment : Fragment() {
                 .startAlbum()
     }
 
+    override fun showSnackBar(message: String) {
+        view?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT)
+                    .show()
+        }
+    }
+
+    override fun addFoodFinish() {
+        activity?.finish()
+    }
+
+    override fun showThumbNail(foodImageUri: String) {
+        Glide.with(this)
+                .load(foodImageUri)
+                .into(foodAddImageView)
+    }
+
+    private val onClickSelectImage: (View) -> Unit = {
+        addPresenter.clickSelectImage()
+    }
+
     private val onConfirmAdd: (View) -> Unit = {
         val title = foodAddEditText.text.toString()
-        if (title.isNotBlank() && foodImageUri.isNotBlank()) {
-            repository.addFood(FoodMenuItem(title, foodImageUri))
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(this::addFoodFinish, { Timber.e(it) })
-        } else {
-            when {
-                title.isBlank() -> {
-                    Snackbar.make(it, "Title cannot be blank", Snackbar.LENGTH_SHORT)
-                            .show()
-                }
-                foodImageUri.isBlank() -> {
-                    Snackbar.make(it, "Image cannot be blank", Snackbar.LENGTH_SHORT)
-                            .show()
-                }
-            }
-        }
+        addPresenter.addFood(title)
     }
 
     private fun onSelectedImage(imageData: ArrayList<Uri>?) {
         imageData?.let {
-            foodImageUri = it[0].toString()
-            Glide.with(this)
-                    .load(foodImageUri)
-                    .into(foodAddImageView)
+            addPresenter.selectedImage(it[0].toString())
         }
-    }
-
-    private fun addFoodFinish() {
-        activity?.finish()
     }
 
     companion object {
