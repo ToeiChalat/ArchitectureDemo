@@ -1,7 +1,6 @@
 package com.chalat.architecturedemo
 
-import com.chalat.architecturedemo.add.AddContract
-import com.chalat.architecturedemo.add.AddPresenter
+import com.chalat.architecturedemo.add.AddViewModel
 import com.chalat.architecturedemo.data.FoodDataSource
 import com.chalat.architecturedemo.data.entities.FoodMenuItem
 import com.chalat.architecturedemo.utils.any
@@ -18,13 +17,10 @@ import org.mockito.MockitoAnnotations
  * Created by Chalat Chansima on 4/8/18.
  *
  */
-class FoodAddPresenterTest {
+class FoodAddViewModelTest {
 
-    private lateinit var presenter: AddContract.Presenter
-    @Mock
-    private lateinit var foodRepository: FoodDataSource
-    @Mock
-    private lateinit var view: AddContract.View
+    private lateinit var viewModel: AddViewModel
+    @Mock private lateinit var foodRepository: FoodDataSource
 
     private val mockFoodAdd = FoodMenuItem("PadThai", "mockUrlPadThai")
 
@@ -32,7 +28,7 @@ class FoodAddPresenterTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        presenter = AddPresenter(view, foodRepository)
+        viewModel = AddViewModel(foodRepository)
     }
 
     @Test
@@ -41,8 +37,8 @@ class FoodAddPresenterTest {
         Mockito.`when`(foodRepository.addFood(any()))
                 .thenReturn(Completable.complete())
         // When
-        presenter.selectedImage(mockFoodAdd.foodImageUrl)
-        presenter.addFood(mockFoodAdd.foodTitle)
+        viewModel.selectedImage(mockFoodAdd.foodImageUrl)
+        viewModel.addFood(mockFoodAdd.foodTitle)
         // Then
         Mockito.verify(foodRepository).addFood(eq(mockFoodAdd))
     }

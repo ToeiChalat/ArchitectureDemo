@@ -2,6 +2,7 @@ package com.chalat.architecturedemo.main
 
 import com.chalat.architecturedemo.data.FoodDataSource
 import com.chalat.architecturedemo.data.entities.FoodMenuItem
+import io.reactivex.Observable
 import timber.log.Timber
 
 /**
@@ -9,14 +10,11 @@ import timber.log.Timber
  * Created by Chalat Chansima on 4/8/18.
  *
  */
-class MainPresenter(private val view: MainContract.View,
-                    private val foodRepository: FoodDataSource)
-    :MainContract.Presenter {
+class MainViewModel(private val foodRepository: FoodDataSource) {
 
-    override fun getRandomFood() {
-        foodRepository.getFoodList()
+    fun getRandomFood(): Observable<List<FoodMenuItem>> {
+        return foodRepository.getFoodList()
                 .map { random(it) }
-                .subscribe({ view.updateView(it) }, { Timber.e(it) })
     }
 
     private fun random(foodList: List<FoodMenuItem>): List<FoodMenuItem> {

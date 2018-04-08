@@ -8,21 +8,25 @@ import android.view.View
 import android.view.ViewGroup
 import com.chalat.architecturedemo.Injection
 import com.chalat.architecturedemo.R
-import com.chalat.architecturedemo.data.FoodDataSource
 import com.chalat.architecturedemo.data.entities.FoodMenuItem
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_main.*
+import timber.log.Timber
 
-class MainFragment : Fragment(), MainContract.View {
+class MainFragment : Fragment(){
 
     private val adapter = FoodMenuAdapter()
-    private lateinit var foodRepository: FoodDataSource
-    private lateinit var mainPresenter: MainContract.Presenter
+
+    private lateinit var mainViewModel: MainViewModel
+    private val disposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         context?.let {
-            foodRepository = Injection.getFoodRepository(it)
-            mainPresenter = Injection.getMainPresenter(this, foodRepository)
+            val foodRepository = Injection.getFoodRepository(it)
+            mainViewModel = Injection.getMainViewModel(foodRepository)
         }
     }
 
@@ -40,17 +44,35 @@ class MainFragment : Fragment(), MainContract.View {
     }
 
     override fun onResume() {
+        bindViewModel()
         super.onResume()
-        getRandomFood()
     }
 
-    override fun updateView(randomFoodList: List<FoodMenuItem>) {
+    override fun onPause() {
+        unbindViewModel()
+        super.onPause()
+    }
+
+    private fun updateView(randomFoodList: List<FoodMenuItem>) {
         adapter.replaceData(randomFoodList)
         foodMenuSwipeRefreshLayout.isRefreshing = false
     }
 
+    private fun bindViewModel() {
+        getRandomFood()
+    }
+
+    private fun unbindViewModel() {
+        disposable.clear()
+    }
+
     private fun getRandomFood() {
-        mainPresenter.getRandomFood()
+        disposable.add(
+                mainViewModel.getRandomFood()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(this::updateView, { Timber.e(it) })
+        )
     }
 
     companion object {
