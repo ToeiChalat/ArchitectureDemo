@@ -22,6 +22,7 @@ import com.bumptech.glide.Glide
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.util.ArrayList
 
 
 class AddFragment : Fragment() {
@@ -46,14 +47,7 @@ class AddFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         foodAddConfirmFab.setOnClickListener(onConfirmAdd)
-        foodAddImageView.setOnClickListener {
-            FishBun.with(this)
-                    .setImageAdapter(GlideAdapter())
-                    .setCamera(true)
-                    .setMaxCount(1)
-                    .setReachLimitAutomaticClose(true)
-                    .startAlbum()
-        }
+        foodAddImageView.setOnClickListener(onClickSelectImage)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -61,14 +55,18 @@ class AddFragment : Fragment() {
         when (requestCode) {
             Define.ALBUM_REQUEST_CODE -> if (resultCode == RESULT_OK) {
                 val imageData = data?.getParcelableArrayListExtra<Uri>(Define.INTENT_PATH)
-                imageData?.let {
-                    foodImageUri = it[0].toString()
-                    Glide.with(this)
-                            .load(foodImageUri)
-                            .into(foodAddImageView)
-                }
+                onSelectedImage(imageData)
             }
         }
+    }
+
+    private val onClickSelectImage: (View) -> Unit = {
+        FishBun.with(this)
+                .setImageAdapter(GlideAdapter())
+                .setCamera(true)
+                .setMaxCount(1)
+                .setReachLimitAutomaticClose(true)
+                .startAlbum()
     }
 
     private val onConfirmAdd: (View) -> Unit = {
@@ -77,7 +75,7 @@ class AddFragment : Fragment() {
             repository.addFood(FoodMenuItem(title, foodImageUri))
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe({ addFoodFinish() }, { Timber.e(it) })
+                    .subscribe(this::addFoodFinish, { Timber.e(it) })
         } else {
             when {
                 title.isBlank() -> {
@@ -89,6 +87,15 @@ class AddFragment : Fragment() {
                             .show()
                 }
             }
+        }
+    }
+
+    private fun onSelectedImage(imageData: ArrayList<Uri>?) {
+        imageData?.let {
+            foodImageUri = it[0].toString()
+            Glide.with(this)
+                    .load(foodImageUri)
+                    .into(foodAddImageView)
         }
     }
 

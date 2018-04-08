@@ -17,7 +17,7 @@ class FoodLocalDataSource(private val sharedPreferences: SharedPreferences) : Fo
     private val menuListKey = "com.chalat.architecturedemo.menuListKey"
     private val gson = Gson()
 
-    override fun getRandomFood(): Observable<List<FoodMenuItem>> {
+    override fun getFoodList(): Observable<List<FoodMenuItem>> {
         var menuList = getMenuListFromSharedPreference()
         if (menuList.isNullOrBlank()) {
             menuList = seed()
@@ -33,7 +33,7 @@ class FoodLocalDataSource(private val sharedPreferences: SharedPreferences) : Fo
     private fun getMenuListFromSharedPreference() = sharedPreferences.getString(menuListKey, "")
 
     override fun addFood(foodItem: FoodMenuItem): Completable {
-        return getRandomFood()
+        return getFoodList()
                 .doOnNext {
                     val newList = ArrayList(it).apply { add(foodItem) }
                     val foodList = FoodMenuList(newList)

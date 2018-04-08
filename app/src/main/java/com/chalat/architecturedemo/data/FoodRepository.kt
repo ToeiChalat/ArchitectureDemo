@@ -11,13 +11,8 @@ import io.reactivex.Observable
  */
 class FoodRepository(private val foodLocalDataSource: FoodDataSource) : FoodDataSource {
 
-    override fun getRandomFood(): Observable<List<FoodMenuItem>> {
-        return foodLocalDataSource.getRandomFood()
-                .map {
-                    val randomFoodList = ArrayList(it)
-                    randomFoodList.shuffle()
-                    randomFoodList
-                }
+    override fun getFoodList(): Observable<List<FoodMenuItem>> {
+        return foodLocalDataSource.getFoodList()
     }
 
     override fun addFood(foodItem: FoodMenuItem): Completable {

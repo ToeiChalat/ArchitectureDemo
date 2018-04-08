@@ -11,7 +11,7 @@ import io.reactivex.Observable
  */
 interface FoodDataSource {
 
-    fun getRandomFood(): Observable<List<FoodMenuItem>>
+    fun getFoodList(): Observable<List<FoodMenuItem>>
 
     fun addFood(foodItem: FoodMenuItem): Completable
 }

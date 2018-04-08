@@ -34,7 +34,6 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         foodMenuRecyclerView.layoutManager = GridLayoutManager(context, 2)
         foodMenuRecyclerView.adapter = adapter
         foodMenuSwipeRefreshLayout.setOnRefreshListener { getRandomFood() }
@@ -46,11 +45,12 @@ class MainFragment : Fragment() {
     }
 
     private fun getRandomFood() {
-        foodRepository.getRandomFood()
+        foodRepository.getFoodList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
-                    adapter.replaceData(it)
+                    val randomFoodList = it.shuffled()
+                    adapter.replaceData(randomFoodList)
                     foodMenuSwipeRefreshLayout.isRefreshing = false
                 }, { Timber.e(it) })
     }
